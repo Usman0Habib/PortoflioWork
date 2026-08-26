@@ -254,7 +254,7 @@
     box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
     cursor: pointer;
   }
-  .p-media iframe{
+  .p-media iframe, .p-media .yt-target{
     position:absolute; inset:0; width:100%; height:100%; border:0;
     pointer-events: none; /* card click is handled by the overlay, not the player */
   }
@@ -422,10 +422,11 @@
 
    tag / title / desc / stack : whatever text you want shown
    youtubeId                  : already filled in for you
-   previewTimestamps          : seconds into the video the
-                                 "moments" preview jumps between.
-                                 Adjust per-clip once you know
-                                 each video's actual length.
+   previewFractions            : WHERE in the video (as a % of its
+                                 real duration, 0 to 1) the preview
+                                 jumps to. Duration is read live from
+                                 YouTube so this works regardless of
+                                 clip length — no guessing seconds.
    The FIRST project also becomes the looping hero background —
    reorder the array so your strongest clip is first.
    ============================================================ */
@@ -433,70 +434,53 @@ const projects = [
   {
     tag: "Clip 1", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "KAqla54UQJk", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "KAqla54UQJk", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 2", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "oIId7MbXa9A", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "oIId7MbXa9A", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 3", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "m1ghtyqdV7Y", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "m1ghtyqdV7Y", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 4", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "8POFrjaXUfw", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "8POFrjaXUfw", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 5", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "0m7sgoZpThI", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "0m7sgoZpThI", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 6", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "mwAon9H9dPo", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "mwAon9H9dPo", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 7", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "2OoVWcMC0A8", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "2OoVWcMC0A8", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 8", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "M3V8RjYhGPQ", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "M3V8RjYhGPQ", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clip 9", title: "Untitled system — tell me what this is",
     desc: "Placeholder description — reply with a one-line summary and I'll write this properly.",
-    stack: [], youtubeId: "5owR7uNOmCo", previewTimestamps: [3, 20, 45, 75]
+    stack: [], youtubeId: "5owR7uNOmCo", previewFractions: [0.05, 0.3, 0.55, 0.8]
   }
 ];
 
 const container = document.getElementById('projects');
 
-function ytEmbed(id, start, opts=''){
-  return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&start=${start}&controls=0&modestbranding=1&rel=0&iv_load_policy=3&loop=1&playlist=${id}${opts}`;
-}
-
-// hero background = first project with a real id, gently cycling through moments too
-const heroProject = projects.find(p => p.youtubeId);
-if(heroProject){
-  let hi = 0;
-  const times = heroProject.previewTimestamps && heroProject.previewTimestamps.length
-    ? heroProject.previewTimestamps : [0];
-  const heroEl = document.getElementById('hero-video');
-  const setHero = () => {
-    heroEl.innerHTML = `<iframe src="${ytEmbed(heroProject.youtubeId, times[hi])}" allow="autoplay; encrypted-media"></iframe>`;
-    hi = (hi + 1) % times.length;
-  };
-  setHero();
-  if(times.length > 1) setInterval(setHero, 8000);
-}
+// --- build the static DOM first (this can happen before the YT API loads) ---
 
 projects.forEach((p, i) => {
   const idx = String(i + 1).padStart(2, '0');
@@ -505,10 +489,10 @@ projects.forEach((p, i) => {
 
   let mediaInner;
   if(p.youtubeId){
-    const times = (p.previewTimestamps && p.previewTimestamps.length) ? p.previewTimestamps : [0];
+    const n = (p.previewFractions && p.previewFractions.length) || 1;
     mediaInner = `
-      <iframe src="${ytEmbed(p.youtubeId, times[0])}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-      <div class="preview-dots">${times.map((t,ti)=>`<span class="${ti===0?'active':''}"></span>`).join('')}</div>
+      <div class="yt-target" id="yt-card-${i}"></div>
+      <div class="preview-dots">${Array.from({length:n}).map((_,ti)=>`<span class="${ti===0?'active':''}"></span>`).join('')}</div>
       <div class="play-overlay"><div class="play-chip">
         <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Click to watch full clip
       </div></div>`;
@@ -527,35 +511,110 @@ projects.forEach((p, i) => {
     </div>
   `;
   container.appendChild(section);
-
-  // moments-preview cycling for this card
-  const p_media = section.querySelector('.p-media');
-  const iframe = p_media.querySelector('iframe');
-  const dots = p_media.querySelectorAll('.preview-dots span');
-  if(p.youtubeId){
-    const times = (p.previewTimestamps && p.previewTimestamps.length) ? p.previewTimestamps : [0];
-    let ci = 0;
-    let cycleTimer = null;
-    const cycle = () => {
-      ci = (ci + 1) % times.length;
-      iframe.src = ytEmbed(p.youtubeId, times[ci]);
-      dots.forEach((d,di) => d.classList.toggle('active', di === ci));
-    };
-    if(times.length > 1) cycleTimer = setInterval(cycle, 5000);
-
-    p_media.addEventListener('click', () => {
-      if(p_media.classList.contains('expanded')) return;
-      if(cycleTimer) clearInterval(cycleTimer);
-      p_media.classList.add('expanded');
-      iframe.src = `https://www.youtube.com/embed/${p.youtubeId}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0`;
-    });
-  }
 });
 
 const io = new IntersectionObserver((entries) => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); });
 }, { threshold: 0.15 });
 document.querySelectorAll('.project').forEach(s => io.observe(s));
+
+// --- load the real YouTube IFrame Player API, then wire up players ---
+// (players only play/cycle while their card is actually on screen)
+
+const ytTag = document.createElement('script');
+ytTag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(ytTag);
+
+window.onYouTubeIframeAPIReady = function(){
+
+  function makePlayer(elId, videoId, opts, onReady){
+    return new YT.Player(elId, {
+      videoId: videoId,
+      playerVars: Object.assign({
+        autoplay: 0, mute: 1, controls: 1, modestbranding: 1,
+        rel: 0, playsinline: 1, iv_load_policy: 3
+      }, opts),
+      events: { 'onReady': onReady }
+    });
+  }
+
+  // hero background player — first project with a real clip
+  const heroProject = projects.find(p => p.youtubeId);
+  if(heroProject){
+    document.getElementById('hero-video').innerHTML = '<div id="yt-hero"></div>';
+    const fractions = (heroProject.previewFractions && heroProject.previewFractions.length) ? heroProject.previewFractions : [0];
+    makePlayer('yt-hero', heroProject.youtubeId, {controls:0}, (e) => {
+      e.target.mute();
+      e.target.playVideo();
+      let hi = 0;
+      if(fractions.length > 1){
+        setInterval(() => {
+          const dur = e.target.getDuration() || 0;
+          if(dur > 0){
+            hi = (hi + 1) % fractions.length;
+            e.target.seekTo(dur * fractions[hi], true);
+          }
+        }, 8000);
+      }
+    });
+  }
+
+  // per-card players
+  document.querySelectorAll('.p-media').forEach((p_media) => {
+    const i = Number(p_media.dataset.idx);
+    const p = projects[i];
+    if(!p.youtubeId) return;
+
+    const target = p_media.querySelector('.yt-target');
+    const dots = p_media.querySelectorAll('.preview-dots span');
+    const fractions = (p.previewFractions && p.previewFractions.length) ? p.previewFractions : [0];
+    let ci = 0;
+    let cycleTimer = null;
+    let expanded = false;
+    let player = null;
+
+    const startCycle = () => {
+      if(cycleTimer || fractions.length < 2 || expanded || !player) return;
+      cycleTimer = setInterval(() => {
+        const dur = player.getDuration() || 0;
+        if(dur > 0){
+          ci = (ci + 1) % fractions.length;
+          player.seekTo(dur * fractions[ci], true);
+          dots.forEach((d, di) => d.classList.toggle('active', di === ci));
+        }
+      }, 5000);
+    };
+    const stopCycle = () => { if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; } };
+
+    player = makePlayer(target.id, p.youtubeId, {controls:0}, (e) => {
+      e.target.mute();
+      // only start playing once the card is actually visible — handled by the observer below
+      const cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if(expanded) return;
+          if(entry.isIntersecting){
+            e.target.playVideo();
+            startCycle();
+          } else {
+            e.target.pauseVideo();
+            stopCycle();
+          }
+        });
+      }, { threshold: 0.35 });
+      cardObserver.observe(p_media);
+    });
+
+    p_media.addEventListener('click', () => {
+      if(expanded) return;
+      expanded = true;
+      stopCycle();
+      p_media.classList.add('expanded');
+      player.unMute();
+      player.setVolume(100);
+      player.playVideo();
+    });
+  });
+};
 </script>
 
 </body>
