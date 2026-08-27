@@ -145,33 +145,37 @@
     display:flex;
     flex-wrap: wrap;
     gap: 0;
-    border-top: 1px solid rgba(243,238,225,0.14);
     border-bottom: 1px solid rgba(243,238,225,0.14);
   }
   .stats-strip .cell{
     flex: 1 1 220px;
-    padding: 26px 6vw;
+    padding: 16px 6vw;
     border-right: 1px solid rgba(243,238,225,0.14);
   }
   .stats-strip .cell:last-child{ border-right:none; }
   .stats-strip .n{
     font-family: var(--serif);
     font-weight: 600;
-    font-size: 30px;
+    font-size: 22px;
     color: var(--gold);
     display:block;
   }
   .stats-strip .l{
-    font-size: 12px;
+    font-size: 11px;
     color: var(--cream-dim);
-    margin-top: 4px;
+    margin-top: 2px;
     display:block;
   }
 
-  /* ---------- PROJECT SECTIONS (alternating, no grid) ---------- */
+  /* ---------- COMPACT GALLERY GRID ---------- */
 
   .work-intro{
-    padding: 100px 6vw 10px;
+    padding: 90px 6vw 6px;
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 14px;
   }
   .work-intro .eyebrow{
     font-size: 12px;
@@ -182,55 +186,152 @@
   .work-intro h2{
     font-family: var(--serif);
     font-weight: 500;
-    font-size: clamp(30px, 4.5vw, 50px);
-    max-width: 640px;
-    margin-top: 12px;
+    font-size: clamp(24px, 3.2vw, 34px);
+    margin-top: 8px;
+  }
+  .work-intro .hint{
+    font-size: 12px;
+    color: var(--cream-dim);
   }
 
-  .project{
+  .gallery{
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 64px;
-    padding: 90px 6vw;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    padding: 22px 6vw 100px;
+  }
+
+  .tile{
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    aspect-ratio: 16/10;
+    background: #081209;
+    cursor: pointer;
     opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease, outline-color 0.2s ease;
+    outline: 1px solid rgba(243,238,225,0.08);
   }
-  .project.in{ opacity:1; transform: translateY(0); }
-  .project:nth-child(odd) .p-media{ order: 1; }
-  .project:nth-child(odd) .p-text{ order: 2; }
-  .project:nth-child(even) .p-media{ order: 2; }
-  .project:nth-child(even) .p-text{ order: 1; }
+  .tile.in{ opacity:1; transform: translateY(0); }
+  .tile:hover{ outline-color: var(--gold); }
 
-  .p-index{
-    font-family: var(--serif);
-    font-weight: 300;
-    font-size: 90px;
-    color: rgba(243,238,225,0.09);
-    line-height: 1;
-    position: absolute;
-    margin-top: -50px;
+  .tile iframe, .tile .yt-target{
+    position:absolute; inset:0; width:100%; height:100%; border:0;
+    pointer-events: none;
   }
+  .tile .placeholder{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:6px;
+    text-align:center; padding:12px;
+    font-size: 10.5px;
+    color: #6E7C72;
+    background: repeating-linear-gradient(45deg, #0F1B14, #0F1B14 10px, #0A140E 10px, #0A140E 20px);
+  }
+  .tile .placeholder b{ color: var(--gold); font-weight:600; }
 
-  .p-text .eyebrow{
+  .tile-caption{
+    position:absolute; left:0; right:0; bottom:0;
+    padding: 8px 10px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--cream);
+    display:flex; justify-content: space-between;
+    pointer-events:none;
+  }
+  .tile-caption .tag{ color: var(--gold); }
+
+  .tile .preview-dots{
+    position:absolute; top:8px; right:8px;
+    display:flex; gap:4px;
+    pointer-events:none;
+  }
+  .tile .preview-dots span{
+    width:4px; height:4px; border-radius:50%;
+    background: rgba(243,238,225,0.35);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .tile .preview-dots span.active{ background: var(--gold); transform: scale(1.3); }
+
+  .tile .expand-hint{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0);
+    transition: background 0.2s ease;
+    pointer-events:none;
+  }
+  .tile:hover .expand-hint{ background: rgba(0,0,0,0.15); }
+  .tile .expand-hint svg{
+    width:26px; height:26px; fill: var(--cream);
+    opacity:0; transform: scale(0.8);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .tile:hover .expand-hint svg{ opacity:0.9; transform: scale(1); }
+
+  /* ---------- LIGHTBOX ---------- */
+
+  .lightbox{
+    position: fixed; inset:0;
+    background: rgba(6,10,8,0.92);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding: 5vh 5vw;
+  }
+  .lightbox.open{ display:flex; }
+
+  .lightbox-close{
+    position:absolute; top:24px; right:28px;
+    background:none; border:none;
+    color: var(--cream);
+    font-size: 22px;
+    cursor:pointer;
+    line-height:1;
+    width:38px; height:38px;
+    border-radius:50%;
+    transition: background 0.2s ease;
+  }
+  .lightbox-close:hover{ background: rgba(243,238,225,0.1); }
+
+  .lightbox-inner{
+    display:flex;
+    gap: 36px;
+    max-width: 1080px;
+    width:100%;
+    align-items:center;
+  }
+  .lightbox-media{
+    flex: 1.5;
+    aspect-ratio: 16/9;
+    border-radius: 6px;
+    overflow:hidden;
+    background:#000;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6);
+  }
+  .lightbox-media iframe{ width:100%; height:100%; border:0; }
+
+  .lightbox-text{ flex:1; min-width: 240px; }
+  .lightbox-text .eyebrow{
     font-size: 11.5px;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--gold);
   }
-  .p-text h3{
+  .lightbox-text h3{
     font-family: var(--serif);
     font-weight: 500;
-    font-size: clamp(26px, 3vw, 36px);
-    margin: 12px 0 14px;
-    line-height: 1.08;
+    font-size: clamp(22px, 2.6vw, 30px);
+    margin: 10px 0 12px;
+    line-height:1.1;
   }
-  .p-text p{
+  .lightbox-text p{
     color: var(--cream-dim);
-    font-size: 15px;
-    max-width: 420px;
-    margin-bottom: 18px;
+    font-size: 14.5px;
+    margin-bottom: 16px;
   }
   .stackline{
     display:flex;
@@ -245,74 +346,9 @@
     color: var(--gold);
   }
 
-  .p-media{
-    position: relative;
-    border-radius: 6px;
-    overflow: hidden;
-    aspect-ratio: 16/10;
-    background: #081209;
-    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
-    cursor: pointer;
-  }
-  .p-media iframe, .p-media .yt-target{
-    position:absolute; inset:0; width:100%; height:100%; border:0;
-    pointer-events: none; /* card click is handled by the overlay, not the player */
-  }
-  .p-media.expanded iframe{ pointer-events: auto; }
-  .p-media .placeholder{
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:8px;
-    text-align:center; padding:16px;
-    font-size: 12px;
-    color: #6E7C72;
-    background: repeating-linear-gradient(45deg, #0F1B14, #0F1B14 10px, #0A140E 10px, #0A140E 20px);
-  }
-  .p-media .placeholder b{ color: var(--gold); font-weight:600; }
-
-  .play-overlay{
-    position:absolute; inset:0;
-    display:flex; align-items:flex-end; justify-content:flex-start;
-    padding: 16px;
-    background: linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 40%);
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-  }
-  .p-media.expanded .play-overlay{ opacity: 0; }
-  .play-chip{
-    display:flex; align-items:center; gap:8px;
-    background: rgba(15,31,23,0.75);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(243,238,225,0.25);
-    color: var(--cream);
-    font-size: 12px;
-    letter-spacing: 0.03em;
-    padding: 8px 14px 8px 10px;
-    border-radius: 100px;
-  }
-  .play-chip svg{ width:12px; height:12px; fill: var(--gold); }
-  .preview-dots{
-    position:absolute; top:14px; right:14px;
-    display:flex; gap:5px;
-  }
-  .p-media.expanded .preview-dots{ display:none; }
-  .preview-dots span{
-    width:5px; height:5px; border-radius:50%;
-    background: rgba(243,238,225,0.35);
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-  .preview-dots span.active{
-    background: var(--gold);
-    transform: scale(1.3);
-  }
-
-  @media (max-width: 820px){
-    .project{ grid-template-columns: 1fr; gap: 26px; padding: 60px 6vw; }
-    .project:nth-child(odd) .p-media,
-    .project:nth-child(even) .p-media{ order: 1; }
-    .project:nth-child(odd) .p-text,
-    .project:nth-child(even) .p-text{ order: 2; }
-    .p-index{ display:none; }
+  @media (max-width: 760px){
+    .lightbox-inner{ flex-direction: column; }
+    .gallery{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:8px; }
   }
 
   /* ---------- CONTACT / FOOTER ---------- */
@@ -391,11 +427,27 @@
   </div>
 
   <div class="work-intro">
-    <div class="eyebrow">Selected Work</div>
-    <h2>Systems I've built, in the games they run.</h2>
+    <div>
+      <div class="eyebrow">Selected Work</div>
+      <h2>Systems I've built, in the games they run.</h2>
+    </div>
+    <div class="hint">Click any clip to watch it full-size</div>
   </div>
 
-  <div id="projects"></div>
+  <div class="gallery" id="gallery"></div>
+
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightbox-close">✕</button>
+    <div class="lightbox-inner">
+      <div class="lightbox-media"><div id="lightbox-player"></div></div>
+      <div class="lightbox-text">
+        <div class="eyebrow" id="lb-tag"></div>
+        <h3 id="lb-title"></h3>
+        <p id="lb-desc"></p>
+        <div class="stackline" id="lb-stack"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="contact">
     <div class="eyebrow">Get in touch</div>
@@ -478,48 +530,82 @@ const projects = [
   }
 ];
 
-const container = document.getElementById('projects');
+const container = document.getElementById('gallery');
+const tilePlayers = []; // registry: { player, isInView, expanded, startCycle, stopCycle }
 
-// --- build the static DOM first (this can happen before the YT API loads) ---
+// --- build the static grid DOM first (this can happen before the YT API loads) ---
 
 projects.forEach((p, i) => {
-  const idx = String(i + 1).padStart(2, '0');
-  const section = document.createElement('div');
-  section.className = 'project';
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.dataset.idx = i;
 
-  let mediaInner;
+  let inner;
   if(p.youtubeId){
     const n = (p.previewFractions && p.previewFractions.length) || 1;
-    mediaInner = `
-      <div class="yt-target" id="yt-card-${i}"></div>
+    inner = `
+      <div class="yt-target" id="yt-tile-${i}"></div>
       <div class="preview-dots">${Array.from({length:n}).map((_,ti)=>`<span class="${ti===0?'active':''}"></span>`).join('')}</div>
-      <div class="play-overlay"><div class="play-chip">
-        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Click to watch full clip
-      </div></div>`;
+      <div class="tile-caption"><span>${p.title.length > 26 ? p.title.slice(0,24)+'…' : p.title}</span><span class="tag">${p.tag}</span></div>
+      <div class="expand-hint"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></div>`;
   } else {
-    mediaInner = `<div class="placeholder"><b>No clip loaded</b>Set youtubeId for "${p.tag}"<br>in the config below</div>`;
+    inner = `<div class="placeholder"><b>No clip loaded</b>Set youtubeId for "${p.tag}"</div>`;
   }
-
-  section.innerHTML = `
-    <div class="p-media" data-idx="${i}">${mediaInner}</div>
-    <div class="p-text">
-      <span class="p-index">${idx}</span>
-      <div class="eyebrow">${p.tag}</div>
-      <h3>${p.title}</h3>
-      <p>${p.desc}</p>
-      <div class="stackline">${p.stack.map(s => `<span>${s}</span>`).join('')}</div>
-    </div>
-  `;
-  container.appendChild(section);
+  tile.innerHTML = inner;
+  container.appendChild(tile);
 });
 
 const io = new IntersectionObserver((entries) => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); });
-}, { threshold: 0.15 });
-document.querySelectorAll('.project').forEach(s => io.observe(s));
+}, { threshold: 0.1 });
+document.querySelectorAll('.tile').forEach(t => io.observe(t));
+
+// --- lightbox wiring ---
+
+const lightbox = document.getElementById('lightbox');
+const lbTag = document.getElementById('lb-tag');
+const lbTitle = document.getElementById('lb-title');
+const lbDesc = document.getElementById('lb-desc');
+const lbStack = document.getElementById('lb-stack');
+let lightboxPlayer = null;
+
+function pauseAllTiles(){
+  tilePlayers.forEach(t => { if(t.player && t.isInView){ t.player.pauseVideo(); t.stopCycle(); } });
+}
+function resumeVisibleTiles(){
+  tilePlayers.forEach(t => { if(t.player && t.isInView && !t.expanded){ t.player.playVideo(); t.startCycle(); } });
+}
+
+function openLightbox(i){
+  const p = projects[i];
+  if(!p.youtubeId) return;
+  lbTag.textContent = p.tag;
+  lbTitle.textContent = p.title;
+  lbDesc.textContent = p.desc;
+  lbStack.innerHTML = p.stack.map(s => `<span>${s}</span>`).join('');
+  lightbox.classList.add('open');
+  pauseAllTiles();
+
+  if(!lightboxPlayer){
+    lightboxPlayer = new YT.Player('lightbox-player', {
+      videoId: p.youtubeId,
+      playerVars: { autoplay: 1, mute: 0, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+      events: { 'onReady': (e) => { e.target.playVideo(); } }
+    });
+  } else {
+    lightboxPlayer.loadVideoById(p.youtubeId);
+  }
+}
+function closeLightbox(){
+  lightbox.classList.remove('open');
+  if(lightboxPlayer) lightboxPlayer.stopVideo();
+  resumeVisibleTiles();
+}
+document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeLightbox(); });
 
 // --- load the real YouTube IFrame Player API, then wire up players ---
-// (players only play/cycle while their card is actually on screen)
 
 const ytTag = document.createElement('script');
 ytTag.src = "https://www.youtube.com/iframe_api";
@@ -531,90 +617,84 @@ window.onYouTubeIframeAPIReady = function(){
     return new YT.Player(elId, {
       videoId: videoId,
       playerVars: Object.assign({
-        autoplay: 0, mute: 1, controls: 1, modestbranding: 1,
+        autoplay: 0, mute: 1, controls: 0, modestbranding: 1,
         rel: 0, playsinline: 1, iv_load_policy: 3
       }, opts),
       events: { 'onReady': onReady }
     });
   }
 
-  // hero background player — first project with a real clip
-  const heroProject = projects.find(p => p.youtubeId);
-  if(heroProject){
+  // --- hero background: rotates through EVERY project's clip, not just one ---
+  const clipList = projects.filter(p => p.youtubeId);
+  if(clipList.length){
     document.getElementById('hero-video').innerHTML = '<div id="yt-hero"></div>';
-    const fractions = (heroProject.previewFractions && heroProject.previewFractions.length) ? heroProject.previewFractions : [0];
-    makePlayer('yt-hero', heroProject.youtubeId, {controls:0}, (e) => {
+    let hi = 0;
+    makePlayer('yt-hero', clipList[0].youtubeId, {}, (e) => {
       e.target.mute();
       e.target.playVideo();
-      let hi = 0;
-      if(fractions.length > 1){
+      if(clipList.length > 1){
         setInterval(() => {
-          const dur = e.target.getDuration() || 0;
-          if(dur > 0){
-            hi = (hi + 1) % fractions.length;
-            e.target.seekTo(dur * fractions[hi], true);
-          }
-        }, 8000);
+          hi = (hi + 1) % clipList.length;
+          e.target.loadVideoById({ videoId: clipList[hi].youtubeId, startSeconds: 4 });
+          e.target.mute();
+        }, 7000);
       }
     });
   }
 
-  // per-card players
-  document.querySelectorAll('.p-media').forEach((p_media) => {
-    const i = Number(p_media.dataset.idx);
+  // --- gallery tile players ---
+  document.querySelectorAll('.tile').forEach((tile) => {
+    const i = Number(tile.dataset.idx);
     const p = projects[i];
     if(!p.youtubeId) return;
 
-    const target = p_media.querySelector('.yt-target');
-    const dots = p_media.querySelectorAll('.preview-dots span');
+    const target = tile.querySelector('.yt-target');
+    const dots = tile.querySelectorAll('.preview-dots span');
     const fractions = (p.previewFractions && p.previewFractions.length) ? p.previewFractions : [0];
     let ci = 0;
     let cycleTimer = null;
-    let expanded = false;
-    let player = null;
 
-    const startCycle = () => {
-      if(cycleTimer || fractions.length < 2 || expanded || !player) return;
+    const reg = { player: null, isInView: false, expanded: false, startCycle: () => {}, stopCycle: () => {} };
+    tilePlayers.push(reg);
+
+    reg.startCycle = () => {
+      if(cycleTimer || fractions.length < 2 || reg.expanded || !reg.player) return;
       cycleTimer = setInterval(() => {
-        const dur = player.getDuration() || 0;
+        const dur = reg.player.getDuration() || 0;
         if(dur > 0){
           ci = (ci + 1) % fractions.length;
-          player.seekTo(dur * fractions[ci], true);
+          reg.player.seekTo(dur * fractions[ci], true);
           dots.forEach((d, di) => d.classList.toggle('active', di === ci));
         }
-      }, 5000);
+      }, 4000);
     };
-    const stopCycle = () => { if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; } };
+    reg.stopCycle = () => { if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; } };
 
-    player = makePlayer(target.id, p.youtubeId, {controls:0}, (e) => {
+    reg.player = makePlayer(target.id, p.youtubeId, {}, (e) => {
       e.target.mute();
-      // only start playing once the card is actually visible — handled by the observer below
       const cardObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-          if(expanded) return;
-          if(entry.isIntersecting){
-            e.target.playVideo();
-            startCycle();
-          } else {
-            e.target.pauseVideo();
-            stopCycle();
-          }
+          reg.isInView = entry.isIntersecting;
+          if(reg.expanded) return;
+          if(entry.isIntersecting){ e.target.playVideo(); reg.startCycle(); }
+          else { e.target.pauseVideo(); reg.stopCycle(); }
         });
-      }, { threshold: 0.35 });
-      cardObserver.observe(p_media);
+      }, { threshold: 0.3 });
+      cardObserver.observe(tile);
     });
 
-    p_media.addEventListener('click', () => {
-      if(expanded) return;
-      expanded = true;
-      stopCycle();
-      p_media.classList.add('expanded');
-      player.unMute();
-      player.setVolume(100);
-      player.playVideo();
+    tile.addEventListener('click', () => {
+      reg.expanded = true;
+      reg.stopCycle();
+      openLightbox(i);
+      // reset expanded flag once the lightbox is closed so tile resumes normally
+      const check = setInterval(() => {
+        if(!lightbox.classList.contains('open')){ reg.expanded = false; clearInterval(check); }
+      }, 300);
     });
   });
 };
+
 </script>
 
 </body>
