@@ -79,27 +79,6 @@
     z-index: 1;
   }
 
-  .hero-top{
-    position:relative; z-index:2;
-    display:flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    font-family: var(--sans);
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    color: var(--cream-dim);
-  }
-
-  .status-pill{
-    display:flex; align-items:center; gap:8px;
-    color: var(--gold);
-  }
-  .status-pill .pip{
-    width:6px; height:6px; border-radius:50%;
-    background: var(--gold);
-    box-shadow: 0 0 10px var(--gold);
-  }
-
   .hero-main{ position:relative; z-index:2; }
 
   h1.name{
@@ -231,18 +210,6 @@
   }
   .tile .placeholder b{ color: var(--gold); font-weight:600; }
 
-  .tile-caption{
-    position:absolute; left:0; right:0; bottom:0;
-    padding: 8px 10px;
-    background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%);
-    font-size: 11px;
-    letter-spacing: 0.03em;
-    color: var(--cream);
-    display:flex; justify-content: space-between;
-    pointer-events:none;
-  }
-  .tile-caption .tag{ color: var(--gold); }
-
   .tile .preview-dots{
     position:absolute; top:8px; right:8px;
     display:flex; gap:4px;
@@ -354,7 +321,7 @@
   /* ---------- CONTACT / FOOTER ---------- */
 
   .contact{
-    padding: 140px 6vw 60px;
+    padding: 140px 6vw 90px;
     border-top: 1px solid rgba(243,238,225,0.14);
   }
   .contact .eyebrow{
@@ -387,15 +354,6 @@
   }
   .contact-links a:hover{ color: var(--gold); border-color: var(--gold); }
 
-  footer{
-    padding: 40px 6vw 50px;
-    font-size: 11.5px;
-    color: rgba(243,238,225,0.35);
-    display:flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
 </style>
 </head>
 <body>
@@ -406,20 +364,16 @@
       <div id="hero-video"></div>
       <div class="veil"></div>
     </div>
-    <div class="hero-top">
-      <span>Portfolio — 2026</span>
-      <span class="status-pill"><span class="pip"></span>Open for Commissions</span>
-    </div>
     <div class="hero-main">
       <h1 class="name">WAR</h1>
       <div class="role-line">Roblox Scripter/Developer</div>
-      <p class="hero-lede">I am War, I have Roblox Scripting experience of over 5 years, i initially started development during covid , Within these 5 years i have developed and mastered a variety of systems such as Tycoon Style game , Datastores, Inventory,Combat, Vehicle systems along with A-Chassis Customisation, I also have experience in Story games and have worked on multiple horror projects inspired from TWSD and many more projects! </p>
+      <p class="hero-lede">I'm War — 5+ years scripting in Roblox, started during COVID. I build the systems that make a game feel finished: tycoons, combat, inventory, DataStores, and custom A-Chassis vehicles. I've also shipped horror/story titles in the spirit of TWSD.</p>
       <div class="scroll-cue"><span class="ln"></span>Scroll to see the work</div>
     </div>
   </div>
 
   <div class="stats-strip">
-    <div class="cell"><span class="n">6 yrs</span><span class="l">Scripting in Luau</span></div>
+    <div class="cell"><span class="n">5+ yrs</span><span class="l">Scripting in Luau</span></div>
     <div class="cell"><span class="n">1M+</span><span class="l">Visits across shipped games</span></div>
     <div class="cell"><span class="n">Luau · Py · SQL</span><span class="l">Core stack</span></div>
   </div>
@@ -450,16 +404,11 @@
     <div class="eyebrow">Get in touch</div>
     <h2>Got a system that needs building?</h2>
     <div class="contact-links">
-      <a href="https://discord.com" target="_blank" rel="noopener">Discord — Warrioruh</a>
-      <a href="https://roblox.com" target="_blank" rel="noopener">Roblox — Warrioruh_yt</a>
-      <a href="mailto:youremail@example.com">youremail@example.com</a>
+      <a href="https://discord.com/users/865599536680271942" target="_blank" rel="noopener">Discord</a>
+      <a href="https://www.roblox.com/users/1766271000/profile" target="_blank" rel="noopener">Roblox</a>
+      <a href="mailto:usain.dev@gmail.com">usain.dev@gmail.com</a>
     </div>
   </div>
-
-  <footer>
-    <span>© War, 2026</span>
-    <span>Send this link, not a resume.</span>
-  </footer>
 
 <script>
 /* ============================================================
@@ -482,22 +431,17 @@
 const projects = [
   {
     tag: "Tycoon/Physics", title: "Solar System Tycoon",
-    desc: "Built Realistic Orbital mechanics for each planet that the player adds into the solar system , with a fully customisable creation segment for each planet,
-      This game includes clever economic calculations deeply interconnected and integrated with various planet stats such as population,pollution,
-      cultural index and many more stats.It involves Full instance and stat saving for 
-      the entire solar system, Gampass shop, Changable graphic/lighting setting [realistic/soft] and many other features.",
+    desc: "Built realistic orbital mechanics for each planet the player adds into the solar system, with a fully customisable creation segment for each planet. This game includes clever economic calculations deeply interconnected with planet stats such as population, pollution, and cultural index. Includes full instance and stat saving for the entire solar system, a gamepass shop, and changeable graphic/lighting settings (realistic/soft).",
     stack: [], youtubeId: "KAqla54UQJk", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Clicker Sim", title: "Cookie Clicker",
-    desc: "Cookie Clicker Sim is a Clicker style game where you earn the main currency of the game through passive clicking 
-      along with Features such as VIP/Group only Chest, Gamepass boost, A full Quest/levelling system, A server side Lottery System, 
-      Rebirth system and rebirth based progression, Purchasable multipliers, secure saving system for player stats ",
+    desc: "A clicker-style game where you earn the main currency through passive clicking, with features such as a VIP/group-only chest, gamepass boosts, a full quest/levelling system, a server-side lottery system, a rebirth system with rebirth-based progression, purchasable multipliers, and a secure saving system for player stats.",
     stack: [], youtubeId: "oIId7MbXa9A", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
-    tag: "Story Game/Cutscene ", title: "Alone in a Forest",
-    desc: "Worked on a full scale horror story style game , developed Entity AI, Horror Cutscnees, Lighting Configuration, Story progression hooks and mechanics.",
+    tag: "Story Game / Cutscene", title: "Alone in a Forest",
+    desc: "Worked on a full-scale horror story-style game — developed entity AI, horror cutscenes, lighting configuration, and story progression hooks and mechanics.",
     stack: [], youtubeId: "m1ghtyqdV7Y", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
@@ -507,22 +451,22 @@ const projects = [
   },
   {
     tag: "Gun System", title: "Realistic Gun System",
-    desc: "Made a realistic Gun System with realistic features such as recoil,sway,shake,bullet vfx,Material Hit effect, Over the shoulder view. This was done for a Hood Stlye game",
+    desc: "Made a realistic gun system with features such as recoil, sway, shake, bullet VFX, material hit effects, and an over-the-shoulder view. Built for a hood-style game.",
     stack: [], youtubeId: "0m7sgoZpThI", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Inventory System", title: "Inventory System",
-    desc: "A Complex and Secure Inventory system with plenty of features such as drag and drop, Multi Item dropping , Configurable stack limit for individual items , A Grave System, Saving/Loading of the inventory,Quick Swap between hotbar and inventory. Inspired from Minecrafts inventory system.",
+    desc: "A complex, secure inventory system with drag-and-drop, multi-item dropping, configurable stack limits per item, a grave system, saving/loading of the inventory, and quick-swap between hotbar and inventory. Inspired by Minecraft's inventory system.",
     stack: [], youtubeId: "mwAon9H9dPo", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
     tag: "Lighting/Physics", title: "Realistic Planet Sim Lighting/Orbit",
-    desc: "Developed the orbital mechanics/ clever point size lighting mechanism to mimic the suns natural light while over coming roblox render engine constraints instead of forcing the game to use the actual star as the source of light, Clever Orbital mechanics with auto correction to make it easy for the player to add planets, and Clever Planet habitibility/stat calculations.",
+    desc: "Developed the orbital mechanics and a custom point-size lighting mechanism to mimic the sun's natural light while working around Roblox's render engine constraints, instead of using the actual star as the light source. Includes clever orbital mechanics with auto-correction and planet habitability/stat calculations.",
     stack: [], youtubeId: "2OoVWcMC0A8", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
-    tag: "Ai/Automation", title: "Smart Plane For Airline Games",
-    desc: "A Smart plane is not hardcoded, its able to adjust to runways, find proper pathways to the runway , park , takeoff perform proper procedures and manuevers , control landing gears flaps thrust smartly , and smoothly land on the target runway. This Feature was built for a AirLine game to solve the problem of needing staff members to operate the plane.",
+    tag: "AI/Automation", title: "Smart Plane for Airline Games",
+    desc: "A smart plane that isn't hardcoded — it adjusts to runways, finds a proper path to the runway, parks, takes off with proper procedures and maneuvers, controls landing gear/flaps/thrust intelligently, and smoothly lands on the target runway. Built for an airline game to remove the need for staff members to manually operate the plane.",
     stack: [], youtubeId: "M3V8RjYhGPQ", previewFractions: [0.05, 0.3, 0.55, 0.8]
   },
   {
@@ -548,7 +492,6 @@ projects.forEach((p, i) => {
     inner = `
       <div class="yt-target" id="yt-tile-${i}"></div>
       <div class="preview-dots">${Array.from({length:n}).map((_,ti)=>`<span class="${ti===0?'active':''}"></span>`).join('')}</div>
-      <div class="tile-caption"><span>${p.title.length > 26 ? p.title.slice(0,24)+'…' : p.title}</span><span class="tag">${p.tag}</span></div>
       <div class="expand-hint"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></div>`;
   } else {
     inner = `<div class="placeholder"><b>No clip loaded</b>Set youtubeId for "${p.tag}"</div>`;
