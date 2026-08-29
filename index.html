@@ -73,6 +73,14 @@
     background:
       radial-gradient(circle at 30% 20%, #1B3527 0%, #0F1F17 60%);
   }
+  .hero-poster{
+    position:absolute; inset:0;
+    background-size: cover;
+    background-position: center;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    z-index: 0;
+  }
   .hero-bg .veil{
     position:absolute; inset:0;
     background: linear-gradient(180deg, rgba(15,31,23,0.35) 0%, rgba(15,31,23,0.55) 55%, rgba(15,31,23,0.96) 100%);
@@ -199,6 +207,16 @@
     position:absolute; inset:0; width:100%; height:100%; border:0;
     pointer-events: none;
   }
+  .tile-poster{
+    position:absolute; inset:0;
+    background-size: cover;
+    background-position: center;
+    background-color: #0B140F;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
   .tile .placeholder{
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
@@ -315,7 +333,8 @@
 
   @media (max-width: 760px){
     .lightbox-inner{ flex-direction: column; }
-    .gallery{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:8px; }
+    .gallery{ grid-template-columns: 1fr; gap: 14px; padding: 18px 5vw 70px; }
+    .work-intro{ padding: 60px 5vw 4px; }
   }
 
   /* ---------- CONTACT / FOOTER ---------- */
@@ -354,6 +373,7 @@
   <div class="hero">
     <div class="hero-bg">
       <div class="fallback"></div>
+      <div class="hero-poster" id="hero-poster"></div>
       <div id="hero-video"></div>
       <div class="veil"></div>
     </div>
@@ -471,6 +491,13 @@ const projects = [
 const container = document.getElementById('gallery');
 const tilePlayers = []; // registry: { player, isInView, expanded, startCycle, stopCycle }
 
+// show the hero's poster thumbnail immediately, don't wait on the YT API for this
+const firstClip = projects.find(p => p.youtubeId);
+if(firstClip){
+  document.getElementById('hero-poster').style.backgroundImage =
+    `url('https://img.youtube.com/vi/${firstClip.youtubeId}/hqdefault.jpg')`;
+}
+
 // --- build the static grid DOM first (this can happen before the YT API loads) ---
 
 projects.forEach((p, i) => {
@@ -483,6 +510,7 @@ projects.forEach((p, i) => {
     const n = (p.previewFractions && p.previewFractions.length) || 1;
     inner = `
       <div class="yt-target" id="yt-tile-${i}"></div>
+      <div class="tile-poster" style="background-image:url('https://img.youtube.com/vi/${p.youtubeId}/hqdefault.jpg')"></div>
       <div class="preview-dots">${Array.from({length:n}).map((_,ti)=>`<span class="${ti===0?'active':''}"></span>`).join('')}</div>
       <div class="expand-hint"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></div>`;
   } else {
@@ -550,14 +578,14 @@ document.head.appendChild(ytTag);
 
 window.onYouTubeIframeAPIReady = function(){
 
-  function makePlayer(elId, videoId, opts, onReady){
+  function makePlayer(elId, videoId, opts, onReady, onStateChange){
     return new YT.Player(elId, {
       videoId: videoId,
       playerVars: Object.assign({
         autoplay: 0, mute: 1, controls: 0, modestbranding: 1,
         rel: 0, playsinline: 1, iv_load_policy: 3
       }, opts),
-      events: { 'onReady': onReady }
+      events: { 'onReady': onReady, 'onStateChange': onStateChange }
     });
   }
 
@@ -566,6 +594,8 @@ window.onYouTubeIframeAPIReady = function(){
   if(clipList.length){
     document.getElementById('hero-video').innerHTML = '<div id="yt-hero"></div>';
     let hi = 0;
+    let heroEverPlayed = false;
+    const heroPoster = document.querySelector('.hero-poster');
     makePlayer('yt-hero', clipList[0].youtubeId, {}, (e) => {
       e.target.mute();
       e.target.playVideo();
@@ -576,22 +606,33 @@ window.onYouTubeIframeAPIReady = function(){
           e.target.mute();
         }, 7000);
       }
+    }, (ev) => {
+      if(!heroEverPlayed && ev.data === YT.PlayerState.PLAYING){
+        heroEverPlayed = true;
+        if(heroPoster) heroPoster.style.opacity = '0';
+      }
     });
   }
 
-  // --- gallery tile players ---
+  // --- gallery tile players: LAZY — only created once a tile actually scrolls into view ---
+  // this is what keeps the page from trying to load 9 videos at once on a slow connection
   document.querySelectorAll('.tile').forEach((tile) => {
     const i = Number(tile.dataset.idx);
     const p = projects[i];
     if(!p.youtubeId) return;
 
     const target = tile.querySelector('.yt-target');
+    const poster = tile.querySelector('.tile-poster');
     const dots = tile.querySelectorAll('.preview-dots span');
     const fractions = (p.previewFractions && p.previewFractions.length) ? p.previewFractions : [0];
     let ci = 0;
     let cycleTimer = null;
 
-    const reg = { player: null, isInView: false, expanded: false, startCycle: () => {}, stopCycle: () => {} };
+    const reg = {
+      player: null, ready: false, everPlayed: false,
+      isInView: false, expanded: false,
+      startCycle: () => {}, stopCycle: () => {}
+    };
     tilePlayers.push(reg);
 
     reg.startCycle = () => {
@@ -607,30 +648,44 @@ window.onYouTubeIframeAPIReady = function(){
     };
     reg.stopCycle = () => { if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; } };
 
-    reg.player = makePlayer(target.id, p.youtubeId, {}, (e) => {
-      e.target.mute();
-      const cardObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          reg.isInView = entry.isIntersecting;
-          if(reg.expanded) return;
-          if(entry.isIntersecting){ e.target.playVideo(); reg.startCycle(); }
-          else { e.target.pauseVideo(); reg.stopCycle(); }
-        });
-      }, { threshold: 0.3 });
-      cardObserver.observe(tile);
-    });
+    function createPlayer(){
+      reg.player = makePlayer(target.id, p.youtubeId, {}, (e) => {
+        reg.ready = true;
+        e.target.mute();
+        if(reg.isInView && !reg.expanded){ e.target.playVideo(); reg.startCycle(); }
+      }, (ev) => {
+        if(!reg.everPlayed && ev.data === YT.PlayerState.PLAYING){
+          reg.everPlayed = true;
+          poster.style.opacity = '0';
+        }
+      });
+    }
+
+    const cardObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        reg.isInView = entry.isIntersecting;
+        if(entry.isIntersecting && !reg.player){
+          createPlayer(); // first time this tile is seen — load it now, not before
+          return;
+        }
+        if(!reg.ready || reg.expanded) return;
+        if(entry.isIntersecting){ reg.player.playVideo(); reg.startCycle(); }
+        else { reg.player.pauseVideo(); reg.stopCycle(); }
+      });
+    }, { threshold: 0.2, rootMargin: '400px 0px' }); // rootMargin: start loading slightly before it's on screen
+    cardObserver.observe(tile);
 
     tile.addEventListener('click', () => {
       reg.expanded = true;
       reg.stopCycle();
       openLightbox(i);
-      // reset expanded flag once the lightbox is closed so tile resumes normally
       const check = setInterval(() => {
         if(!lightbox.classList.contains('open')){ reg.expanded = false; clearInterval(check); }
       }, 300);
     });
   });
 };
+
 
 </script>
 
