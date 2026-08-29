@@ -545,10 +545,10 @@ const lbStack = document.getElementById('lb-stack');
 let lightboxPlayer = null;
 
 function pauseAllTiles(){
-  tilePlayers.forEach(t => { if(t.player && t.isInView){ t.player.pauseVideo(); t.stopCycle(); } });
+  tilePlayers.forEach(t => { if(t.player && t.ready){ t.player.pauseVideo(); t.stopCycle(); } });
 }
-function resumeVisibleTiles(){
-  tilePlayers.forEach(t => { if(t.player && t.isInView && !t.expanded){ t.player.playVideo(); t.startCycle(); } });
+function resumeAllTiles(){
+  tilePlayers.forEach(t => { if(t.player && t.ready && !t.expanded){ t.player.playVideo(); t.startCycle(); } });
 }
 
 function openLightbox(i){
@@ -565,7 +565,16 @@ function openLightbox(i){
     lightboxPlayer = new YT.Player('lightbox-player', {
       videoId: p.youtubeId,
       playerVars: { autoplay: 1, mute: 0, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
-      events: { 'onReady': (e) => { e.target.playVideo(); } }
+      events: {
+        'onReady': (e) => { e.target.playVideo(); },
+        // if the video pauses (e.g. from exiting fullscreen) while the lightbox is
+        // still open, resume it automatically instead of leaving it sitting paused
+        'onStateChange': (ev) => {
+          if(ev.data === YT.PlayerState.PAUSED && lightbox.classList.contains('open')){
+            setTimeout(() => { if(lightbox.classList.contains('open')) ev.target.playVideo(); }, 250);
+          }
+        }
+      }
     });
   } else {
     lightboxPlayer.loadVideoById(p.youtubeId);
@@ -574,11 +583,18 @@ function openLightbox(i){
 function closeLightbox(){
   lightbox.classList.remove('open');
   if(lightboxPlayer) lightboxPlayer.stopVideo();
-  resumeVisibleTiles();
+  resumeAllTiles();
 }
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
 lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
 document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeLightbox(); });
+// exiting native fullscreen (e.g. via Escape) shouldn't close the lightbox outright —
+// just make sure the video keeps playing once we're back to the modal view
+document.addEventListener('fullscreenchange', () => {
+  if(!document.fullscreenElement && lightboxPlayer && lightbox.classList.contains('open')){
+    setTimeout(() => lightboxPlayer.playVideo(), 200);
+  }
+});
 
 // --- load the real YouTube IFrame Player API, then wire up players ---
 
@@ -593,7 +609,8 @@ window.onYouTubeIframeAPIReady = function(){
       videoId: videoId,
       playerVars: Object.assign({
         autoplay: 1, mute: 1, controls: 0, modestbranding: 1,
-        rel: 0, playsinline: 1, iv_load_policy: 3
+        rel: 0, playsinline: 1, iv_load_policy: 3,
+        loop: 1, playlist: videoId // native loop — video restarts instantly, no "ended/replay" state ever shows
       }, opts),
       events: { 'onReady': onReady, 'onStateChange': onStateChange }
     });
@@ -621,11 +638,12 @@ window.onYouTubeIframeAPIReady = function(){
         heroEverPlayed = true;
         if(heroPoster) heroPoster.style.opacity = '0';
       }
+      // native loop should handle this, but as a safety net:
+      if(ev.data === YT.PlayerState.ENDED){ ev.target.seekTo(0, true); ev.target.playVideo(); }
     });
   }
 
-  // --- gallery tile players: LAZY — only created once a tile actually scrolls into view ---
-  // this is what keeps the page from trying to load 9 videos at once on a slow connection
+  // --- gallery tile players: all created and playing immediately, not gated by scroll ---
   document.querySelectorAll('.tile').forEach((tile) => {
     const i = Number(tile.dataset.idx);
     const p = projects[i];
@@ -639,8 +657,7 @@ window.onYouTubeIframeAPIReady = function(){
     let cycleTimer = null;
 
     const reg = {
-      player: null, ready: false, everPlayed: false,
-      isInView: false, expanded: false,
+      player: null, ready: false, everPlayed: false, expanded: false,
       startCycle: () => {}, stopCycle: () => {}
     };
     tilePlayers.push(reg);
@@ -650,46 +667,30 @@ window.onYouTubeIframeAPIReady = function(){
       // stagger so many tiles don't seek in lockstep and flash the paused overlay together
       const jitter = 800 + Math.random() * 2400;
       const period = 4500 + Math.random() * 1500;
-      const kickoff = setTimeout(() => {
-        cycleTimer = setInterval(() => {
-          const dur = reg.player.getDuration() || 0;
-          if(dur > 0){
-            ci = (ci + 1) % fractions.length;
-            reg.player.seekTo(dur * fractions[ci], true);
-            dots.forEach((d, di) => d.classList.toggle('active', di === ci));
-          }
-        }, period);
+      cycleTimer = setTimeout(function tick(){
+        const dur = reg.player.getDuration() || 0;
+        if(dur > 0){
+          ci = (ci + 1) % fractions.length;
+          reg.player.seekTo(dur * fractions[ci], true);
+          dots.forEach((d, di) => d.classList.toggle('active', di === ci));
+        }
+        cycleTimer = setTimeout(tick, period);
       }, jitter);
-      cycleTimer = kickoff; // placeholder so a second startCycle() call before kickoff fires is a no-op
     };
-    reg.stopCycle = () => { if(cycleTimer){ clearTimeout(cycleTimer); clearInterval(cycleTimer); cycleTimer = null; } };
+    reg.stopCycle = () => { if(cycleTimer){ clearTimeout(cycleTimer); cycleTimer = null; } };
 
-    function createPlayer(){
-      reg.player = makePlayer(target.id, p.youtubeId, {}, (e) => {
-        reg.ready = true;
-        e.target.mute();
-        if(reg.isInView && !reg.expanded){ e.target.playVideo(); reg.startCycle(); }
-      }, (ev) => {
-        if(!reg.everPlayed && ev.data === YT.PlayerState.PLAYING){
-          reg.everPlayed = true;
-          poster.style.opacity = '0';
-        }
-      });
-    }
-
-    const cardObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        reg.isInView = entry.isIntersecting;
-        if(entry.isIntersecting && !reg.player){
-          createPlayer(); // first time this tile is seen — load it now, not before
-          return;
-        }
-        if(!reg.ready || reg.expanded) return;
-        if(entry.isIntersecting){ reg.player.playVideo(); reg.startCycle(); }
-        else { reg.player.pauseVideo(); reg.stopCycle(); }
-      });
-    }, { threshold: 0.2, rootMargin: '400px 0px' }); // rootMargin: start loading slightly before it's on screen
-    cardObserver.observe(tile);
+    reg.player = makePlayer(target.id, p.youtubeId, {}, (e) => {
+      reg.ready = true;
+      e.target.mute();
+      if(!reg.expanded){ e.target.playVideo(); reg.startCycle(); }
+    }, (ev) => {
+      if(!reg.everPlayed && ev.data === YT.PlayerState.PLAYING){
+        reg.everPlayed = true;
+        poster.style.opacity = '0';
+      }
+      // native loop should handle this, but as a safety net:
+      if(ev.data === YT.PlayerState.ENDED){ ev.target.seekTo(0, true); ev.target.playVideo(); }
+    });
 
     tile.addEventListener('click', () => {
       reg.expanded = true;
