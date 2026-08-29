@@ -485,6 +485,16 @@ const projects = [
     tag: "Vehicle Sim/Physics", title: "Realistic Functioning Plane",
     desc: "Developed a realistic working plane along with the realistic physics and movement of the plane.",
     stack: [], youtubeId: "5owR7uNOmCo", previewFractions: [0.05, 0.3, 0.55, 0.8]
+  },
+  {
+    tag: "Sound Design/Proximity", title: "Biome-Specific Sound Design and Proximity Sound",
+    desc: "A fully customisable sound system that places specific sounds for individual biomes, with proximity-based sound for elements such as water bodies, caves, crystals, grass, and trees — so it feels like each object is actually emitting that sound.",
+    stack: [], youtubeId: "KXP8V6bB7dU", previewFractions: [0.05, 0.3, 0.55, 0.8]
+  },
+  {
+    tag: "Placement/TDS", title: "Tower Defense Game",
+    desc: "Tower defense placement and core system with tag-specific placement limitations and enemy targeting.",
+    stack: [], youtubeId: "sIrYADFhk4s", previewFractions: [0.05, 0.3, 0.55, 0.8]
   }
 ];
 
@@ -582,7 +592,7 @@ window.onYouTubeIframeAPIReady = function(){
     return new YT.Player(elId, {
       videoId: videoId,
       playerVars: Object.assign({
-        autoplay: 0, mute: 1, controls: 0, modestbranding: 1,
+        autoplay: 1, mute: 1, controls: 0, modestbranding: 1,
         rel: 0, playsinline: 1, iv_load_policy: 3
       }, opts),
       events: { 'onReady': onReady, 'onStateChange': onStateChange }
@@ -637,16 +647,22 @@ window.onYouTubeIframeAPIReady = function(){
 
     reg.startCycle = () => {
       if(cycleTimer || fractions.length < 2 || reg.expanded || !reg.player) return;
-      cycleTimer = setInterval(() => {
-        const dur = reg.player.getDuration() || 0;
-        if(dur > 0){
-          ci = (ci + 1) % fractions.length;
-          reg.player.seekTo(dur * fractions[ci], true);
-          dots.forEach((d, di) => d.classList.toggle('active', di === ci));
-        }
-      }, 4000);
+      // stagger so many tiles don't seek in lockstep and flash the paused overlay together
+      const jitter = 800 + Math.random() * 2400;
+      const period = 4500 + Math.random() * 1500;
+      const kickoff = setTimeout(() => {
+        cycleTimer = setInterval(() => {
+          const dur = reg.player.getDuration() || 0;
+          if(dur > 0){
+            ci = (ci + 1) % fractions.length;
+            reg.player.seekTo(dur * fractions[ci], true);
+            dots.forEach((d, di) => d.classList.toggle('active', di === ci));
+          }
+        }, period);
+      }, jitter);
+      cycleTimer = kickoff; // placeholder so a second startCycle() call before kickoff fires is a no-op
     };
-    reg.stopCycle = () => { if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; } };
+    reg.stopCycle = () => { if(cycleTimer){ clearTimeout(cycleTimer); clearInterval(cycleTimer); cycleTimer = null; } };
 
     function createPlayer(){
       reg.player = makePlayer(target.id, p.youtubeId, {}, (e) => {
