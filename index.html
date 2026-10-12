@@ -10,11 +10,11 @@
 <style>
 
   /* ============================================================
-     EDIT YOUR PROJECTS in the `projects` array near the bottom
-     of the <script> block. Each entry needs a youtubeId from an
-     UNLISTED YouTube upload (the part after watch?v= in the URL).
-     The FIRST project's video also plays behind the hero name,
-     so put your strongest/most visual clip first.
+     PROJECTS COME FROM THE YOUTUBE PLAYLIST automatically (see
+     api/playlist.js). Add a video to the playlist and it appears
+     here within a few minutes; reorder the playlist to reorder
+     the grid. To override a video's text on the site, edit the
+     `projectDetails` array near the bottom of the <script> block.
      ============================================================ */
 
   :root{
@@ -317,6 +317,9 @@
     color: var(--cream-dim);
     font-size: 14.5px;
     margin-bottom: 16px;
+    white-space: pre-line;   /* keep line breaks from YouTube descriptions */
+    max-height: 45vh;
+    overflow-y: auto;
   }
   .stackline{
     display:flex;
@@ -424,23 +427,36 @@
 
 <script>
 /* ============================================================
-   PROJECT CONFIG — real video IDs are wired in below from the
-   links you sent. Tags/titles/descriptions are placeholders
-   ("Clip 1"..."Clip 9") since I can't watch the videos myself —
-   tell me which clip shows which system and I'll fill these in
-   properly. You can also just edit them yourself:
+   WHICH VIDEOS SHOW, AND IN WHAT ORDER, comes from the YouTube
+   playlist via /api/playlist — nothing to edit here for that.
+   A playlist video with no entry below uses its YouTube title
+   and description.
 
+   projectDetails is optional per-video text, matched by youtubeId.
+   Any field you set replaces the YouTube one:
    tag / title / desc / stack : whatever text you want shown
-   youtubeId                  : already filled in for you
    previewFractions            : WHERE in the video (as a % of its
                                  real duration, 0 to 1) the preview
                                  jumps to. Duration is read live from
                                  YouTube so this works regardless of
                                  clip length — no guessing seconds.
-   The FIRST project also becomes the looping hero background —
-   reorder the array so your strongest clip is first.
+
+   If the playlist can't be loaded (e.g. opening this file
+   locally), this list is shown instead, in this order.
    ============================================================ */
-const projects = [
+const PLAYLIST_ENDPOINT = '/api/playlist';
+const DEFAULT_PREVIEW_FRACTIONS = [0.05, 0.3, 0.55, 0.8];
+
+const projectDetails = [
+  {
+    tag: "Tournament System", youtubeId: "5MXS00zTlpU"
+  },
+  {
+    tag: "AI/Physics", youtubeId: "XlWrx9aavZA"
+  },
+  {
+    tag: "Combat System", youtubeId: "TcDzfeHVguc"
+  },
   {
     tag: "Tycoon/Physics", title: "Solar System Tycoon",
     desc: "Built realistic orbital mechanics for each planet the player adds into the solar system, with a fully customisable creation segment for each planet. This game includes clever economic calculations deeply interconnected with planet stats such as population, pollution, and cultural index. Includes full instance and stat saving for the entire solar system, a gamepass shop, and changeable graphic/lighting settings (realistic/soft).",
@@ -498,8 +514,36 @@ const projects = [
   }
 ];
 
+// fill in any field a project left out, so a bare playlist video still renders fully
+function normalizeProject(p){
+  return Object.assign({ tag: '', title: '', desc: '', stack: [], previewFractions: DEFAULT_PREVIEW_FRACTIONS }, p);
+}
+
+// playlist order and membership win; projectDetails only supplies text
+async function loadProjects(){
+  const fallback = projectDetails.filter(p => p.title).map(normalizeProject);
+  try{
+    const res = await fetch(PLAYLIST_ENDPOINT, { signal: AbortSignal.timeout(8000) });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const { videos } = await res.json();
+    if(!videos || !videos.length) throw new Error('empty playlist');
+    const byId = new Map(projectDetails.map(p => [p.youtubeId, p]));
+    return videos.map(v => normalizeProject(Object.assign(
+      { youtubeId: v.youtubeId, title: v.title, desc: v.description },
+      byId.get(v.youtubeId)
+    )));
+  }catch(err){
+    console.warn('Playlist unavailable, showing built-in project list:', err);
+    return fallback;
+  }
+}
+
+let projects = [];
 const container = document.getElementById('gallery');
 const tilePlayers = []; // registry: { player, isInView, expanded, startCycle, stopCycle }
+
+loadProjects().then(list => {
+projects = list;
 
 // show the hero's poster thumbnail immediately, don't wait on the YT API for this
 const firstClip = projects.find(p => p.youtubeId);
@@ -534,6 +578,12 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); });
 }, { threshold: 0.1 });
 document.querySelectorAll('.tile').forEach(t => io.observe(t));
+
+// the players below read `projects`, so only pull in the YT API once it's filled
+const ytTag = document.createElement('script');
+ytTag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(ytTag);
+});
 
 // --- lightbox wiring ---
 
@@ -596,11 +646,7 @@ document.addEventListener('fullscreenchange', () => {
   }
 });
 
-// --- load the real YouTube IFrame Player API, then wire up players ---
-
-const ytTag = document.createElement('script');
-ytTag.src = "https://www.youtube.com/iframe_api";
-document.head.appendChild(ytTag);
+// --- once the YouTube IFrame Player API loads (requested above), wire up players ---
 
 window.onYouTubeIframeAPIReady = function(){
 
