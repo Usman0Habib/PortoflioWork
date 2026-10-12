@@ -59,14 +59,35 @@ function collectVideos(node, out, seen){
   }
 }
 
+function findDescription(text){
+  const m = text.match(/"attributedDescription":\{"content":"((?:[^"\\]|\\.)*)"/)
+         || text.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
+  return m ? JSON.parse(`"${m[1]}"`) : null;
+}
+
+// YouTube serves cloud servers a watch page without the player data, so ask
+// the endpoint behind the watch page's description box first
 async function fetchDescription(id){
-  try{
-    const html = await getText(`https://www.youtube.com/watch?v=${id}`, 6000);
-    const m = html.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
-    return m ? JSON.parse(`"${m[1]}"`) : '';
-  }catch(e){
-    return ''; // a missing description shouldn't drop the video
+  const sources = [
+    async () => {
+      const res = await fetch('https://www.youtube.com/youtubei/v1/next?prettyPrint=false', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, HEADERS),
+        body: JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: '2.20250101.00.00', hl: 'en' } }, videoId: id }),
+        signal: AbortSignal.timeout(6000)
+      });
+      if(!res.ok) throw new Error(`next -> HTTP ${res.status}`);
+      return res.text();
+    },
+    () => getText(`https://www.youtube.com/watch?v=${id}`, 6000)
+  ];
+  for(const source of sources){
+    try{
+      const desc = findDescription(await source());
+      if(desc !== null) return desc;
+    }catch(e){ /* try the next source */ }
   }
+  return ''; // a missing description shouldn't drop the video
 }
 
 module.exports = async (req, res) => {
